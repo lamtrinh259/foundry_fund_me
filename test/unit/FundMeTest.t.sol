@@ -64,7 +64,7 @@ contract FundMeTest is StdCheats, Test {
         vm.prank(USER);
         fundMe.fund{value: SEND_VALUE}();
         assert(address(fundMe).balance > 0);
-        _;
+        _; // The funded modifier will be executed first, followed by the function
     }
 
     function testOnlyOwnerCanWithdraw() public funded {
@@ -77,15 +77,19 @@ contract FundMeTest is StdCheats, Test {
         uint256 startingFundMeBalance = address(fundMe).balance;
         uint256 startingOwnerBalance = fundMe.getOwner().balance;
 
+        // Use this to set the gas price, since in Anvil the gas is 0
         // vm.txGasPrice(GAS_PRICE);
         // uint256 gasStart = gasleft();
+        // console.log("gasStart", gasStart);
         // // Act
         vm.startPrank(fundMe.getOwner());
         fundMe.withdraw();
         vm.stopPrank();
 
         // uint256 gasEnd = gasleft();
+        // console.log("gasEnd", gasEnd);
         // uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice;
+        // console.log("gasUsed", gasUsed);
 
         // Assert
         uint256 endingFundMeBalance = address(fundMe).balance;
@@ -98,20 +102,22 @@ contract FundMeTest is StdCheats, Test {
     }
 
     // Can we do our withdraw function a cheaper way?
-    function testWithDrawFromMultipleFunders() public funded {
-        uint160 numberOfFunders = 10;
-        uint160 startingFunderIndex = 2;
+    function testWithdrawFromMultipleFunders() public funded {
+        // Arrange
+        uint160 numberOfFunders = 10; // uint160 has the same size as an address, thus no type casting is needed
+        uint160 startingFunderIndex = 2; // sometimes the 0 address reverts, hence we begin with 1 or 2
         for (
             uint160 i = startingFunderIndex;
             i < numberOfFunders + startingFunderIndex;
             i++
         ) {
             // we get hoax from stdcheats
-            // prank + deal
+            // prank + deal, i.e. it will come with some ether balance
             hoax(address(i), STARTING_USER_BALANCE);
             fundMe.fund{value: SEND_VALUE}();
         }
 
+        // Act
         uint256 startingFundMeBalance = address(fundMe).balance;
         uint256 startingOwnerBalance = fundMe.getOwner().balance;
 
@@ -119,6 +125,42 @@ contract FundMeTest is StdCheats, Test {
         fundMe.withdraw();
         vm.stopPrank();
 
+        // Assert
+        assert(address(fundMe).balance == 0);
+        assert(
+            startingFundMeBalance + startingOwnerBalance ==
+                fundMe.getOwner().balance
+        );
+        assert(
+            (numberOfFunders + 1) * SEND_VALUE ==
+                fundMe.getOwner().balance - startingOwnerBalance
+        );
+    }
+
+    function testWithdrawFromMultipleFundersCheaper() public funded {
+        // Arrange
+        uint160 numberOfFunders = 10; // uint160 has the same size as an address, thus no type casting is needed
+        uint160 startingFunderIndex = 2; // sometimes the 0 address reverts, hence we begin with 1 or 2
+        for (
+            uint160 i = startingFunderIndex;
+            i < numberOfFunders + startingFunderIndex;
+            i++
+        ) {
+            // we get hoax from stdcheats
+            // prank + deal, i.e. it will come with some ether balance
+            hoax(address(i), STARTING_USER_BALANCE);
+            fundMe.fund{value: SEND_VALUE}();
+        }
+
+        // Act
+        uint256 startingFundMeBalance = address(fundMe).balance;
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+
+        vm.startPrank(fundMe.getOwner());
+        fundMe.cheaperWithdraw();
+        vm.stopPrank();
+
+        // Assert
         assert(address(fundMe).balance == 0);
         assert(
             startingFundMeBalance + startingOwnerBalance ==
