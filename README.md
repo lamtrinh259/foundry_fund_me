@@ -21,6 +21,22 @@ Code to inspect storage layout of a contract:
 forge inspect <contract_name> storageLayout
 ```
 
+How to read storage slot from a deployed contract using cast (reference https://book.getfoundry.sh/reference/cast/cast-storage?highlight=storage#cast-storage):
+```Solidity
+cast storage <contract_address> <storage_slot> --rpc-url
+```
+Example: cast storage 0xD7D127991c6A89Df752FC3daeC17540aE8B86101 0 --rpc-url
+
+How to convert number from hex to decimal:
+```Solidity
+cast --to-dec 0x000000000000000000000000000000000000000000000000000000000003d219
+```
+
+Reversely, how to convert number from decimal to hex:
+```Solidity
+cast --to-hex 250393
+```
+
 This website, https://evm.codes, will show the opcodes (primitive operations) gas cost. E.g. ADD costs 3 gas, but MUL costs 5 gas.
 I can add in extension "Solidity Visual Developer" if needed to help identify storage variable and other types of variables.
 
