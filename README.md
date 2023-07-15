@@ -1,3 +1,10 @@
+
+To install a library in Foundry:
+```Solidity
+forge install <github_person_or_org_name/github_repo_name> --no-commit
+forge install Cyfrin/foundry-devops --no-commit
+```
+
 Use the below to find out the gas used for a certain function:
 ```Solidity
 forge snapshot --match-test <name_of_function>
